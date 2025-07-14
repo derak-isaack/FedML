@@ -10,7 +10,18 @@
 - 📡 Devices train **independently** and send **model updates**  
 - 🔁 Central server aggregates updates using the **FedAvg algorithm**
 
-<details> <summary>📊 Click to view Mermaid Diagram Markdown</summary> <pre> ```mermaid flowchart TD subgraph Clients A[Device A] -->|Local Training| S B[Device B] -->|Local Training| S C[Device C] -->|Local Training| S end S[FedAvg Aggregation Server<br>(Aggregates & Updates Model)] S -->|Updated Model| A S -->|Updated Model| B S -->|Updated Model| C ``` </pre> </details>
+```mermaid
+flowchart TD
+    subgraph Clients
+        A[Device A] -->|Local Training| S
+        B[Device B] -->|Local Training| S
+        C[Device C] -->|Local Training| S
+    end
+    S[FedAvg Aggregation Server<br>(Aggregates & Updates Model)]
+    S -->|Updated Model| A
+    S -->|Updated Model| B
+    S -->|Updated Model| C
+```
 
 
 ---

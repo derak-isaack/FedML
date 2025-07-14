@@ -1,0 +1,38 @@
+{
+  "canisters": {
+    "medAIml_backend": {
+      "type": "custom",
+      "build": [
+        "RUSTFLAGS='--cfg getrandom_backend=\"custom\"' cargo build --target wasm32-unknown-unknown --release -p medAIml_backend"
+      ],
+      "wasm": "target/wasm32-unknown-unknown/release/medAIml_backend.wasm",
+      "candid": "src/medAIml_backend/medAIml_backend.did",
+
+      "metadata": [
+          {
+            "name": "candid:service"
+          }
+        ]
+
+    },
+    "medAIml_frontend": {
+      "dependencies": [
+        "medAIml_backend"
+      ],
+      "source": [
+        "src/medAIml_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "medAIml_frontend",
+      "build": "npm run build"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}

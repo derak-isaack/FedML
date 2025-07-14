@@ -1,0 +1,420 @@
+/* index.scss */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #1b3246;
+}
+
+/* ============================= */
+/* Color & Background Utilities */
+/* ============================= */
+
+.bg-gradient-steelblue {
+  background-image: linear-gradient(to bottom right, #4682B4, #36648B);
+  backdrop-filter: blur(10px);
+  background-color: rgba(70, 130, 180, 0.15);
+}
+
+.bg-steelblue-950 {
+  background-color: rgba(27, 50, 70, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+.bg-steelblue-800 {
+  background-color: rgba(46, 86, 119, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+.bg-steelblue-600 {
+  background-color: rgba(70, 130, 180, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+.hover\:bg-steelblue-700:hover {
+  background-color: rgba(58, 108, 150, 0.9);
+}
+
+/* Button backgrounds */
+.bg-accent-teal {
+  background-color: #20B2AA;
+}
+.hover\:bg-accent-teal-dark:hover {
+  background-color: #008080;
+}
+.bg-action-blue {
+  background-color: #4682B4;
+}
+.hover\:bg-action-blue-dark:hover {
+  background-color: #36648B;
+}
+.bg-neutral-gray {
+  background-color: #607B8B;
+}
+.hover\:bg-neutral-gray-dark:hover {
+  background-color: #4F626E;
+}
+.bg-predict-blue {
+  background-color: #4682B4;
+}
+.hover\:bg-predict-blue-dark:hover {
+  background-color: #36648B;
+}
+.bg-warning-red {
+  background-color: #CD5C5C;
+}
+.hover\:bg-warning-red-dark:hover {
+  background-color: #B22222;
+}
+
+/* ============================= */
+/* Text Colors */
+/* ============================= */
+
+.text-white {
+  color: #ffffff;
+}
+.text-steelblue-100 {
+  color: #B0E0E6;
+}
+.text-steelblue-200 {
+  color: #9BC1D9;
+}
+.text-steelblue-300 {
+  color: #87CEEB;
+}
+.text-steelblue-400 {
+  color: #4682B4;
+}
+.text-steelblue-500 {
+  color: #36648B;
+}
+
+/* ============================= */
+/* Layout & Display */
+/* ============================= */
+
+.min-h-screen {
+  min-height: 100vh;
+}
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.h-64 {
+  height: 16rem;
+}
+.object-contain {
+  object-fit: contain;
+}
+.hidden-section {
+  display: none;
+}
+
+/* ============================= */
+/* Glass Effects */
+/* ============================= */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.glass-button {
+  background: rgba(70, 130, 180, 0.2);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+.glass-button:hover {
+  background: rgba(70, 130, 180, 0.3);
+  box-shadow: 0 8px 20px rgba(70, 130, 180, 0.2);
+}
+
+/* ============================= */
+/* Navbar Links & About Panel */
+/* ============================= */
+
+.nav-link {
+  color: #9BC1D9;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.nav-link:hover {
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.about-panel {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  padding: 2rem;
+  max-width: 720px;
+  margin: 2rem auto;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(70, 130, 180, 0.25);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================= */
+/* Text & Typography */
+/* ============================= */
+
+.text-sm {
+  font-size: 0.875rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+}
+.text-2xl {
+  font-size: 1.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-extrabold {
+  font-weight: 800;
+}
+.text-center {
+  text-align: center;
+}
+
+/* ============================= */
+/* Spacing */
+/* ============================= */
+
+.p-4 {
+  padding: 1rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.px-8 {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.space-x-4 > *:not([hidden]) ~ *:not([hidden]),
+.space-x-6 > *:not([hidden]) ~ *:not([hidden]) {
+  margin-left: 1rem;
+}
+
+/* ============================= */
+/* Borders & Radius */
+/* ============================= */
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-b-lg {
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+.border-4 {
+  border-width: 4px;
+}
+.border-dashed {
+  border-style: dashed;
+}
+.border-steelblue-600 {
+  border-color: rgba(70, 130, 180, 0.6);
+}
+.hover\:border-steelblue-500:hover {
+  border-color: rgba(70, 130, 180, 0.5);
+}
+.border-accent-blue-400 {
+  border-color: #818cf8;
+}
+
+/* ============================= */
+/* Effects & Transitions */
+/* ============================= */
+
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(70, 130, 180, 0.1), 0 2px 4px -1px rgba(70, 130, 180, 0.06);
+}
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(70, 130, 180, 0.1), 0 4px 6px -2px rgba(70, 130, 180, 0.05);
+}
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(70, 130, 180, 0.1), 0 10px 10px -5px rgba(70, 130, 180, 0.04);
+}
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(70, 130, 180, 0.25);
+}
+.drop-shadow-lg {
+  filter: drop-shadow(0 10px 8px rgba(70, 130, 180, 0.04)) drop-shadow(0 4px 3px rgba(70, 130, 180, 0.1));
+}
+.transition-all {
+  transition: all 0.3s ease-in-out;
+}
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+/* Dark starry background */
+.bg-space {
+  background: radial-gradient(circle at center, #10121b, #0a0d14);
+  position: relative;
+}
+
+.bg-stars::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Use a subtle, sparse, small star PNG or SVG pattern for the background */
+  background: url('https://raw.githubusercontent.com/JulianDevStar/starry-background/main/stars.png') repeat;
+  background-size: 800px 800px;
+  opacity: 0.25;
+  z-index: 0;
+}
+
+/* Remove twinkle animation */
+
+// .curved-glow {
+//   position: relative;
+//   width: 100vw;
+//   max-width: 1200px;
+//   height: 220px;
+//   margin: 0 auto;
+//   background: #10121b;
+//   border-radius: 100vw 100vw 0 0 / 220px 220px 0 0;
+//   z-index: 2;
+//   overflow: visible;
+// }
+
+.curved-glow::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;     /* Stick to top of the curve */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180vw;
+  height: 150px;
+  background: radial-gradient(circle, rgba(100, 149, 237, 0.7), transparent 80%);
+  border-radius: 100%;
+  filter: blur(80px);
+  opacity: 0.8;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.curved-bottom-bg {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220vw;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(100,149,237,0.35) 0%, rgba(70,130,180,0.18) 40%, transparent 80%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  opacity: 0.9;
+  z-index: 1;
+  pointer-events: none;
+  // filter: blur(100px);
+}
+
+.bg-upload-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(70, 130, 180, 0.25);
+  width: 100%;
+}
+
+.upload-card {
+  width: 90rem;  /* 1440px */
+  max-width: 100%; /* Responsive */
+  padding: 2rem;
+  border-radius: 1rem;
+  border: 4px dashed rgba(70, 130, 180, 0.6);
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(70, 130, 180, 0.25);
+  margin-top: 2rem;
+}

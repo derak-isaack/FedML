@@ -1,0 +1,28 @@
+{
+  "model_type": "MobileNetV3Small",
+  "input_shape": [
+    1,
+    224,
+    224,
+    3
+  ],
+  "num_classes": 1,
+  "activation": "sigmoid",
+  "pooling": "global_average",
+  "hidden_units": [
+    128
+  ],
+  "framework": "keras",
+  "pretrained_base": "imagenet",
+  "trainable_base": false,
+  "classifier_head": {
+    "dense_1": {
+      "units": 128,
+      "activation": "relu"
+    },
+    "output": {
+      "units": 1,
+      "activation": "sigmoid"
+    }
+  }
+}

@@ -18,7 +18,7 @@ flowchart TD
         C[Device C] -->|Local Training| S
     end
 
-    S[FedAvg Aggregation Server(Aggregates and Updates Model)]
+    S[FedAvg Aggregation Server]
     S -->|Updated Model| A
     S -->|Updated Model| B
     S -->|Updated Model| C

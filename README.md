@@ -6,23 +6,23 @@
 
 **Federated Learning (FL)** is a machine learning paradigm focused on **data privacy** and **distributed intelligence**.
 
-- 🔒 Keeps data **local** on edge devices  
-- 📡 Devices train **independently** and send **model updates**  
-- 🔁 Central server aggregates updates using the **FedAvg algorithm**
+- 🔒 Keeps data **local** on edge devices (Temporary memory)
+- 📡 Devices train **independently** and send **model updates(Stable memory)**  
+- 🔁 Central server aggregates new model weights from every client using the **FedAvg algorithm** and updates the model weights in the central repository.
 
 ```mermaid
 flowchart TD
     subgraph Clients
         A[Device A] -->|Local Training| S
-        B[Device B] -->|Local Training| S
+        B[Device B] -->|Local Training| S 
         C[Device C] -->|Local Training| S
     end
 
-    S[FedAvg Aggregation Server\\n(Aggregates and Updates Model)]
+    S[FedAvg Aggregation Server(Aggregates and Updates Model)]
     S -->|Updated Model| A
     S -->|Updated Model| B
     S -->|Updated Model| C
-
+```
 
 
 ---
@@ -31,8 +31,8 @@ flowchart TD
 
 > Malaria remains a persistent health crisis, particularly in **remote African regions** where:
 
-- ❌ Diagnostic labs are scarce  
-- ❌ Trained personnel may be unavailable  
+- ❌ Diagnostic labs are scarce in deep remote settings.
+- ❌ Scarcity of trained and certified labaratory personnel.
 - ⚠️ Misdiagnoses are common—especially with low parasite loads or poor-quality blood smears  
 
 ---
@@ -41,10 +41,10 @@ flowchart TD
 
 - 🧪 Early-stage malaria is **hard to detect**  
 - 🏥 Misdiagnosis leads to **avoidable fatalities**  
-- 🤝 Personalized data from each region can help **tailor AI diagnostics**  
+- 🤝 Personalized data from different clients will help **tailor AI diagnostics**  
 - 📱 Edge devices in local clinics can **learn collaboratively** while preserving privacy  
 
-> ⚡️ We envision **AI-powered diagnostic tools** in every remote clinic—resilient, privacy-aware, and **locally adapted.**
+> ⚡️ At MedCare, we envision **AI-powered diagnostic tools** in every remote clinic—resilient, privacy-aware, and **locally adapted.**
 
 ---
 
@@ -67,16 +67,18 @@ flowchart TD
 
 - 📦 Compact size — suitable for low-resource devices  
 - 🚀 Optimized for inference speed and accuracy  
-- 🧪 Proven performance on complex datasets like CIFAR  
+- 🧪 Proven performance on complex datasets like CIFAR 1000 which has 600 different classes of images 
 
 ---
 
-### 🚀 Deployment on ICP Blockchain
+### 🚀 AI Deployment on ICP Blockchain
 
-> The model is deployed to a **WebApp** powered by:
+The `Safetensor` model file is uploaded to the smart contract using a rust crate called `ic-file-uploader` that uploads the model in chunks. The `Config.json` file which is also the main powerhouse behind how the model operates is also uploaded the same way ensuring a user only uploads the `Blood sample files` to get predictions. 
+
+> The model is deployed to a **WebApplication** powered by:
 
 - ⚙️ **Rust** + **WASM** backend  
-- 🌐 **React** + **TailwindCSS** frontend  
+- 🌐 **React**  
 - 🔗 **ICP Blockchain** for secure and decentralized hosting  
 
 #### 🌍 User Flow:

@@ -52,20 +52,70 @@ flowchart TD
 
 > Since no suitable pretrained model existed, we built one from scratch using **EfficientNetV2** and **TensorFlow**.
 
+> Of importance during the model training is enabling shuffling of the dataset to prevent overfitting cases. 
+
+```python
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 32
+
+# Training dataset
+train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+    "cell_images",
+    validation_split=0.2,
+    subset="training",
+    seed=123,
+    image_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    label_mode='binary',
+    interpolation='bilinear'
+)
+
+# Validation dataset
+val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+    "cell_images",
+    validation_split=0.2,
+    subset="validation",
+    seed=123,
+    image_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    label_mode='binary',
+    interpolation='bilinear'
+)
+```
+
+> 📈 **Results**:
+
+The following classification report shows the model performance using 10 epochs for training on the validation set.
+
+```text
+              precision    recall  f1-score   support
+
+    Parasitized       0.97      0.95      0.96      2709
+     Uninfected       0.95      0.97      0.96      2802
+
+       accuracy                           0.96      5511
+      macro avg       0.96      0.96      0.96      5511
+   weighted avg       0.96      0.96      0.96      5511
+```
+![Model Classification report](Classification_report.png)
+The model achieved a 96% accuracy on the test set.
+
 - 📊 **Dataset**:  
-  - Source: [TFDS Malaria Dataset](https://www.tensorflow.org/datasets/catalog/malaria?hl=en)  
+  - Source: [NIH Malaria Dataset](https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip)  
   - Classes: Infected vs. Uninfected blood cell images  
 
 - 🔧 **Model Architecture**:  
-  - Backbone: `EfficientNetV2`  
+  - Backbone: `MobileNetV3Small`  
   - Framework: `TensorFlow`  
-  - Accuracy: ✅ **94.5%** on test set  
+  - Accuracy: ✅ **96%** on test set  
   - Exported as: `.safetensors` (~5MB)  
 
 
-🧩 *Why EfficientNetV2?*
+🧩 *Why MobilenetSmall?*
 
-- 📦 Compact size — suitable for low-resource devices  
+- 📦 Compact size — suitable for low-resource constraineddevices  
 - 🚀 Optimized for inference speed and accuracy  
 - 🧪 Proven performance on complex datasets like CIFAR 1000 which has 600 different classes of images 
 
@@ -73,7 +123,41 @@ flowchart TD
 
 ### 🚀 AI Deployment on ICP Blockchain
 
-The `Safetensor` model file is uploaded to the smart contract using a rust crate called `ic-file-uploader` that uploads the model in chunks. The `Config.json` file which is also the main powerhouse behind how the model operates is also uploaded the same way ensuring a user only uploads the `Blood sample files` to get predictions. 
+The `Safetensor` model file is uploaded to the smart contract using the rust crate `ic-file-uploader` that uploads the model file in chunks. It uses a CLI *ic-file-uploader medAIml_backend append_openai_model_bytes malaria_mobilenetSmall.safetensors*. The `Config.json` file which is also the main powerhouse behind how the model generates predictions is also uploaded the same way(*ic-file-uploader medAIml_backend append_model_config_bytes config.json*) ensuring a good User Experience by only uploading the `Blood sample files` to get predictions. 
+
+> The `Candle` rust crate depends on the `getrandom` rust crate which is not supported in Blockchain. To get around this, we do the following:
+1. Adjust the dfx.json file to include the following code:
+
+```json
+  "type": "custom",
+      "build": [
+        "RUSTFLAGS='--cfg getrandom_backend=\"custom\"' cargo build --target wasm32-unknown-unknown --release -p medAIml_backend"
+      ],
+```
+
+2. Create a new `.cargo\config.toml` directory in the root directory of the project having the following code:
+```toml
+[build]
+rustflags = ["--cfg", "getrandom_backend=\"custom\""]
+target = "wasm32-unknown-unknown"
+```
+
+3. Create a custom getrandom function to handle the error in te `lib.rs` file containing the following code:
+
+```rust
+use getrandom::Error;
+
+#[no_mangle]
+unsafe extern "Rust" fn __getrandom_v03_custom(
+    dest: *mut u8,
+    len: usize,
+) -> Result<(), Error> {
+    for i in 0..len {
+        *dest.add(i) = 0; 
+    }
+    Ok(())
+}
+```
 
 > The model is deployed to a **WebApplication** powered by:
 
@@ -83,10 +167,17 @@ The `Safetensor` model file is uploaded to the smart contract using a rust crate
 
 #### 🌍 User Flow:
 
+1. User uploads a blood sample.
+2. Model predicts if the sample is infected or not.
+
 
 #### 📁 Source Files:
 - 🧠 `agent.rs`: FedAvg aggregation logic  
-- 🛠 `main.rs`: Model initialization & runtime  
+- 🛠 `Lib.rs`: Main ingestion file
+- 📄 `client.rs`: Model initialization & runtime
+- 📄 `storage.rs`: Model weights storage implementation
+- 📄 `config.json`: Model configuration
+
 
 ---
 
@@ -96,7 +187,6 @@ The `Safetensor` model file is uploaded to the smart contract using a rust crate
 2. Model weights sent to central server  
 3. Server averages weights (FedAvg)  
 4. Updated model sent back to clients  
-5. Repeat  
 
 ---
 

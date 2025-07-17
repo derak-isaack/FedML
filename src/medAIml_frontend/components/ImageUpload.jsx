@@ -37,7 +37,7 @@ const ImageUploadArea = ({ onImageSelect, isDisabled }) => {
 
   return (
     <div
-      className={`upload-card ${isDragging ? 'dragging' : ''} ${isDisabled ? 'disabled' : ''}`}  // Fixed: Removed incorrect comment syntax
+      className={`upload-card ${isDragging ? 'dragging' : ''} ${isDisabled ? 'disabled' : ''}`}  
       onDragOver={isDisabled ? null : handleDragOver}
       onDragLeave={isDisabled ? null : handleDragLeave}
       onDrop={isDisabled ? null : handleDrop}
@@ -61,7 +61,7 @@ const ImageUploadArea = ({ onImageSelect, isDisabled }) => {
             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
           ></path>
         </svg>
-        <p className="text-lg font-semibold">Drag & Drop your image here</p>
+        <p className="text-lg font-semibold">Drag & Drop your Blood samples images here</p>
         <p className="text-sm mt-1">or click to select a file</p>
         <input
           id="image-upload"

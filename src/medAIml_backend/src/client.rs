@@ -40,7 +40,7 @@ const LABELS: usize = 2;
 const WASI_MEMORY_ID: MemoryId = MemoryId::new(10);
 
 // Files in the WASI filesystem (in the stable memory) that store the models.
-const MALARIA_MODEL: &str = "malaria_mobilenetv3.safetensors";
+const MALARIA_MODEL: &str = "malaria_mobilenetSmall.safetensors";
 const MODEL_CONFIG: &str = "config.json";
 
 type Memory1 = VirtualMemory<DefaultMemoryImpl>;
@@ -280,7 +280,7 @@ fn init() {
 }
 
 fn load_model_bytes_from_storage() -> Vec<u8> {
-    crate::storage::bytes("malaria_mobilenetv3.safetensors".to_string()) 
+    crate::storage::bytes("malaria_mobilenetSmall.safetensors".to_string()) 
 }
 
 fn load_config_from_storage() -> Vec<u8> {
@@ -288,7 +288,7 @@ fn load_config_from_storage() -> Vec<u8> {
 }
 
 #[ic_cdk::update]
-pub fn load_and_predict(image_bytes: Vec<u8>) -> Result<(u32, String), String> {
+pub fn load_and_predict(image_bytes: Vec<u8>) -> Result<(u32, String, f32), String> {
     let device = Device::Cpu;
     let mut varmap = VarMap::new();
     let vb = VarBuilder::from_varmap(&mut varmap, DType::F32, &device);
@@ -328,9 +328,6 @@ pub fn load_and_predict(image_bytes: Vec<u8>) -> Result<(u32, String), String> {
         .map(|v| v as f32 / 255.0)
         .collect();
 
-    // let tensor = Tensor::from_vec(image_data, &[1, height as usize, width as usize, 3], &device)?;
-    // let tensor = Tensor::from_vec(image_data, &[1, height as usize, width as usize, 3], &device)
-    //     .map_err(|e| format!("Tensor creation error: {:?}", e))?;
     let tensor = Tensor::from_vec(image_data, &[1, 224 * 224 * 3], &device)
         .map_err(|e| format!("Tensor creation error: {:?}", e))?;
 
@@ -341,25 +338,32 @@ pub fn load_and_predict(image_bytes: Vec<u8>) -> Result<(u32, String), String> {
         .forward(&tensor)
         .map_err(|e| format!("Prediction error: {:?}", e))?;
 
-    let class_idx_tensor = pred
-        .argmax(1) 
-        .map_err(|e| format!("Argmax error: {:?}", e))?;
-        
+    let probabilities = sigmoid(&pred)
+        .map_err(|e| format!("Sigmoid error: {:?}", e))?;
 
-    let class_vec = class_idx_tensor
-        .to_vec1::<u32>()
-        .map_err(|e| format!("Scalar conversion error: {:?}", e))?;
+    let probs_vec = probabilities
+        .to_vec2::<f32>()
+        .map_err(|e| format!("Probability tensor to vec error: {:?}", e))?;
 
-    let class_idx = class_vec.get(0)
+    // Extract probability
+    let class_prob = probs_vec
+        .get(0)
+        .and_then(|v| v.get(0))
         .copied()
-        .ok_or_else(|| "Failed to extract class index.".to_string())?;
+        .ok_or_else(|| "Failed to extract class probability.".to_string())?;
+
+
+    // Apply threshold to get class index
+    let class_idx = if class_prob >= 0.5 { 1 } else { 0 };
 
     let labels = vec!["Healthy", "Malaria detected"];
-    let label = labels.get(class_idx as usize)
+    let label = labels
+        .get(class_idx as usize)
         .unwrap_or(&"Unknown")
         .to_string();
 
-    Ok((class_idx, label))
+    Ok((class_idx, label, class_prob))
+
 }
 
 

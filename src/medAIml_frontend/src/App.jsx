@@ -7,6 +7,10 @@ import LandingPage from '../components/LandingPage';
 import ImageUploadArea from '../components/ImageUpload';
 import CameraView from '../components/Camera';
 import './index.scss';
+// import Starfield from '../components/StarField';
+// import { Canvas } from '@react-three/fiber';
+import StarryBackground from '../components/StarField';
+import About from '../components/About';
 
 
 const agentHost = process.env.DFX_NETWORK === "local"
@@ -23,6 +27,7 @@ const App = () => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const actorRef = useRef(null);
+  const [showAbout, setShowAbout] = useState(false);
 
   // Initialize backend actor
   useEffect(() => {
@@ -113,13 +118,13 @@ const App = () => {
     try {
       const prediction = await actorRef.current.load_and_predict(rawImageBytes);
       if ('ok' in prediction) {
-        const [classIndex, label] = prediction.ok;
-        setPredictionResult(`Class: ${classIndex} — ${label}`);
+        const [classIndex, label, score] = prediction.ok;
+        setPredictionResult(`Class: ${classIndex} — ${label} — Score: ${(score * 100).toFixed(2)}%`);
       } else if ('err' in prediction) {
         setPredictionResult(`Prediction error: ${String(prediction.err)}`);
         console.log('Prediction error:', prediction.err);
       } else {
-        setPredictionResult(`Unexpected prediction result: ${JSON.stringify(prediction)}`);
+        setPredictionResult(`Prediction result: ${JSON.stringify(prediction)}`);
         console.log('Unexpected structure:', prediction);
       }
     } catch (err) {
@@ -133,43 +138,64 @@ const App = () => {
   return (
   <div className="relative min-h-screen overflow-hidden bg-space text-white flex flex-col items-center">
 
-    {/* Starfield Background */}
-    <div className="bg-stars absolute inset-0 z-0"></div>
-
     {/* Navbar */}
     <nav className="relative z-10 flex justify-between items-center p-4 glass-card shadow-lg rounded-b-lg w-full max-w-4xl">
-      <span className="text-2xl font-bold text-steelblue-300">DeepAI</span>
+      <span className="text-2xl font-bold text-steelblue-300">MalCare</span>
       <div className="flex space-x-6">
+        <a href="#" className="nav-link" onClick={e => { e.preventDefault(); setShowAbout(true); }}>About</a>
         <a href="#" className="nav-link">Signup</a>
         <a href="#" className="nav-link">Login</a>
       </div>
     </nav>
+
+    {/* About Modal/Section */}
+    {showAbout && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+        <div className="relative">
+          <button
+            className="absolute top-2 right-2 text-white bg-steelblue-600 rounded-full px-3 py-1 text-lg font-bold shadow hover:bg-steelblue-700"
+            onClick={() => setShowAbout(false)}
+            aria-label="Close About"
+          >
+            ×
+          </button>
+          <About />
+        </div>
+      </div>
+    )}
 
     {/* Main Content */}
     <main className="relative flex flex-col items-center justify-center p-6 w-full text-center flex-grow">
 
       <div className="mx-auto max-w-xl">
         <h1 className="text-5xl font-extrabold mb-4 drop-shadow-lg">
-          Contribute to <span className="text-steelblue-300">Malaria research</span> to make the world a better place
+          Contribute to <span className="text-steelblue-300">Malaria research</span> to make the world a better place.
         </h1>
         <p className="text-lg mb-6">
-          Federated Learning maintains <strong>data privacy</strong>, so your data <strong>is always on local</strong> and respects patient data privacy concerns.
+          Federated Learning maintains strong <strong>patient data privacy</strong> by ensuring <strong>data never leaves your device.</strong>
+        </p>
+        <p className="text-lg mb-6">
+          Patient data privacy is achieved through use of <strong>temporary memory.</strong>
         </p>
       </div>
 
-      <button className="bg-gradient-button hover:scale-105 transition-all text-white font-bold py-3 px-8 rounded-full shadow-2xl mb-6">
-        Improve my AI 🛠️
-      </button>
+      {/* <button className="bg-gradient-button hover:scale-105 transition-all text-white font-bold py-3 px-8 rounded-full shadow-2xl mb-6">
+        Contribute to malaria research 🛠️
+      </button> */}
 
-      <div className="text-steelblue-300 mb-8">★★★★★ 1000+ happy devs</div>
+      <div className="text-steelblue-300 mb-8">Contribute to MalCare and get rewards 🛠️</div>
 
       {/* Curved Glow */}
       <div className="curved-glow"></div>
 
       {/* Curved Background */}
+      {/* The dome should be positioned relative to the main content or the upload card */}
+      <div className="dome-container">
+        <div className="dome"></div>
+        <div className="dome-base"></div>
+      </div>
       <div className="curved-bottom-bg"></div>
-      {/* <div className="relative w-full max-w-2xl flex flex-col items-center">
-      <div className="bg-upload-card ..."></div> */}
+      
 
       {/* Upload Card */}
       <div className="relative w-full max-w-2xl flex flex-col items-center z-10">

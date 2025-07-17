@@ -50,10 +50,43 @@ flowchart TD
 
 ### 🧠 Model Training
 
-> Since no suitable pretrained model existed, we built one from scratch using **EfficientNetV2** and **TensorFlow**.
+> Since no suitable pretrained model existed, we built one from scratch using **MobileNetV3Small** and **TensorFlow**.
+>
+> Data was downloaded from the tensorflow datahub which directly downloads the malaria blood cell imagesdirectly from the `NIH-NLM` website and loaded from memory using tensorflow. Enabling data shuffling across both the training and validation sets ensures the model does not suffer from class imbalance.
+>
+> ```
+> IMG_SIZE = (224, 224)  
+BATCH_SIZE = 32
+
+#Training dataset
+train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+    "cell_images",              
+    validation_split=0.2,       
+    subset="training",          
+    seed=123,                  
+    image_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    shuffle=True,              
+    label_mode='binary',       
+    interpolation='bilinear'   
+)
+
+#Validation dataset
+val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+    "cell_images",
+    validation_split=0.2,
+    subset="validation",       
+    seed=123,                
+    image_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    shuffle=True,          
+    label_mode='binary',
+    interpolation='bilinear'
+)
+```
 
 - 📊 **Dataset**:  
-  - Source: [TFDS Malaria Dataset](https://www.tensorflow.org/datasets/catalog/malaria?hl=en)  
+  - Source: [TFDS Malaria Dataset](https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip)  
   - Classes: Infected vs. Uninfected blood cell images  
 
 - 🔧 **Model Architecture**:  
@@ -63,7 +96,7 @@ flowchart TD
   - Exported as: `.safetensors` (~5MB)  
 
 
-🧩 *Why EfficientNetV2?*
+🧩 *Why MobileNetV3Small?*
 
 - 📦 Compact size — suitable for low-resource devices  
 - 🚀 Optimized for inference speed and accuracy  

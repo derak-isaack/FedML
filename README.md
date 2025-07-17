@@ -100,7 +100,11 @@ The following classification report shows the model performance using 10 epochs 
    weighted avg       0.96      0.96      0.96      5511
 ```
 ![Model Classification report](Classification_report.png)
-The model achieved a 96% accuracy on the test set.
+Out of 2709 cell images in the validation set, the `mobilenet` model correctly predicts 2564 cell images as parasitized and misclassified only 145 cells(*False Positives*)
+
+Out of 2802 cell images in the validation set, the `mobilenet` model correctly predicts 2730 cell images as Uninfected and misclassified only 72 cells(*False Negatives*)
+
+Generally the model achieved a 96% accuracy on the test set.
 
 - 📊 **Dataset**:  
   - Source: [NIH Malaria Dataset](https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip)  

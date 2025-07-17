@@ -354,7 +354,7 @@ body {
   z-index: 0;
 }
 
-/* Remove twinkle animation */
+
 
 // .curved-glow {
 //   position: relative;
@@ -374,7 +374,7 @@ body {
   bottom: 100%;     /* Stick to top of the curve */
   left: 50%;
   transform: translateX(-50%);
-  width: 180vw;
+  width: 100vw;
   height: 150px;
   background: radial-gradient(circle, rgba(100, 149, 237, 0.7), transparent 80%);
   border-radius: 100%;
@@ -389,7 +389,7 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 220vw;
+  width: 100vw;
   height: 500px;
   background: radial-gradient(ellipse at center, rgba(100,149,237,0.35) 0%, rgba(70,130,180,0.18) 40%, transparent 80%);
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;

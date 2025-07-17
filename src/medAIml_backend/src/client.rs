@@ -172,9 +172,6 @@ pub fn dataset_to_tensors(dataset: Dataset) -> Result<Vec<Vec<f32>>, DatasetErro
     Ok(vec![tensor]) // shape: [1, 150528]
 }
 
-
-
-//Define the layers for the model architecture and instantiate new model.
 #[derive(Debug, Clone, CandidType, Deserialize)] 
 pub struct ModelConfig {
     model_type: String,

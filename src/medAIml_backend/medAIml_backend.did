@@ -1,7 +1,7 @@
 type Dataset = record { image : blob };
 type DatasetError = record { message : text };
 type Result = variant { Ok : vec vec float32; Err : DatasetError };
-type Result_1 = variant { Ok : record { nat32; text }; Err : text };
+type Result_1 = variant { Ok : record { nat32; text; float32 }; Err : text };
 type Result_2 = variant { Ok : Dataset; Err : DatasetError };
 service : () -> {
   append_bytes : (text, blob) -> ();

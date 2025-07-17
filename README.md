@@ -54,7 +54,36 @@ flowchart TD
 >
 > Data was downloaded from the tensorflow datahub which directly downloads the malaria blood cell imagesdirectly from the `NIH-NLM` website and loaded from memory using tensorflow. Enabling data shuffling across both the training and validation sets ensures the model does not suffer from class imbalance.
 >
-<pre> ```python IMG_SIZE = (224, 224) BATCH_SIZE = 32 # Training dataset train_ds = tf.keras.preprocessing.image_dataset_from_directory( "cell_images", validation_split=0.2, subset="training", seed=123, image_size=IMG_SIZE, batch_size=BATCH_SIZE, shuffle=True, label_mode='binary', interpolation='bilinear' ) # Validation dataset val_ds = tf.keras.preprocessing.image_dataset_from_directory( "cell_images", validation_split=0.2, subset="validation", seed=123, image_size=IMG_SIZE, batch_size=BATCH_SIZE, shuffle=True, label_mode='binary', interpolation='bilinear' ) ``` </pre>
+```python
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 32
+
+# Training dataset
+train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+    "cell_images",
+    validation_split=0.2,
+    subset="training",
+    seed=123,
+    image_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    label_mode='binary',
+    interpolation='bilinear'
+)
+
+# Validation dataset
+val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+    "cell_images",
+    validation_split=0.2,
+    subset="validation",
+    seed=123,
+    image_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    label_mode='binary',
+    interpolation='bilinear'
+)
+```
 
 - 📊 **Dataset**:  
   - Source: [TFDS Malaria Dataset](https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip)  

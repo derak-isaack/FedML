@@ -1,3 +1,6 @@
+/* index.scss */
+
+/* Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 
 body {
@@ -340,64 +343,45 @@ body {
   position: relative;
 }
 
-body {
-  overflow-x: hidden;
+.bg-stars::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Use a subtle, sparse, small star PNG or SVG pattern for the background */
+  background: url('https://raw.githubusercontent.com/JulianDevStar/starry-background/main/stars.png') repeat;
+  background-size: 800px 800px;
+  opacity: 0.25;
+  z-index: 0;
 }
 
-/* Mobile First: up to 640px */
+/* Remove twinkle animation */
+
+// .curved-glow {
+//   position: relative;
+//   width: 100vw;
+//   max-width: 1200px;
+//   height: 220px;
+//   margin: 0 auto;
+//   background: #10121b;
+//   border-radius: 100vw 100vw 0 0 / 220px 220px 0 0;
+//   z-index: 2;
+//   overflow: visible;
+// }
+
 .curved-glow::before {
   content: '';
   position: absolute;
-  bottom: 100%;
+  bottom: 100%;     /* Stick to top of the curve */
   left: 50%;
   transform: translateX(-50%);
-  width: 120vw;
-  height: 100px;
+  width: 180vw;
+  height: 150px;
   background: radial-gradient(circle, rgba(100, 149, 237, 0.7), transparent 80%);
   border-radius: 100%;
-  filter: blur(60px);
+  filter: blur(80px);
   opacity: 0.8;
   z-index: 2;
   pointer-events: none;
-}
-
-/* Container holding the dome */
-.dome-container {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1200px; /* Increased max-width for a wider dome */
-  height: 80px; /* Reduced height for a more subtle dome */
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.dome {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(ellipse at center, rgba(100, 149, 237, 0.2), rgba(70, 130, 180, 0.1), transparent); /* Softer gradient */
-  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  filter: blur(20px); /* Reduced blur for a sharper edge */
-  opacity: 0.7; /* Reduced opacity */
-}
-
-.dome-base {
-  position: absolute;
-  bottom: 0;
-  width: 60%; /* Adjusted width for the base glow */
-  height: 2px; /* Reduced height for a thinner base */
-  background: rgba(100, 149, 237, 0.6); /* Softer base color */
-  border-radius: 2px;
-  filter: blur(1px); /* Reduced blur */
-  opacity: 0.8;
 }
 
 .curved-bottom-bg {
@@ -405,41 +389,14 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 180vw; /* Increased width for a broader background glow */
-  height: 150px; /* Reduced height */
-  background: radial-gradient(ellipse at center, rgba(100,149,237,0.2) 0%, rgba(70,130,180,0.1) 40%, transparent 80%); /* Softer gradient */
+  width: 220vw;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(100,149,237,0.35) 0%, rgba(70,130,180,0.18) 40%, transparent 80%);
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  opacity: 0.7; /* Reduced opacity */
+  opacity: 0.9;
   z-index: 1;
   pointer-events: none;
-}
-
-/* Tablet: 641px - 1024px */
-@media (min-width: 641px) {
-  .curved-glow::before {
-    width: 140vw;
-    height: 130px;
-    filter: blur(70px);
-  }
-
-  .curved-bottom-bg {
-    width: 160vw;
-    height: 350px;
-  }
-}
-
-/* Desktop: 1025px and up */
-@media (min-width: 1025px) {
-  .curved-glow::before {
-    width: 160vw;
-    height: 150px;
-    filter: blur(80px);
-  }
-
-  .curved-bottom-bg {
-    width: 180vw;
-    height: 500px;
-  }
+  // filter: blur(100px);
 }
 
 .bg-upload-card {
@@ -460,41 +417,4 @@ body {
   background: rgba(255, 255, 255, 0.05);
   box-shadow: 0 25px 50px -12px rgba(70, 130, 180, 0.25);
   margin-top: 2rem;
-}
-
-.starfield-background {
-  position: fixed; /* Changed to fixed to cover the entire viewport */
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1; /* Ensure it's behind all content */
-  pointer-events: none;
-  overflow: hidden;
-}
-.starfield-background svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.starry-background {
-  position: relative;
-  width: 100%;
-  height: 100vh; /* Full viewport height */
-  background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); /* Night sky gradient */
-  overflow: hidden;
-}
-
-#tsparticles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1; /* Ensure particles are behind content */
-}
-
-.starry-background > * {
-  position: relative;
-  z-index: 2; /* Ensure content is above particles */
 }

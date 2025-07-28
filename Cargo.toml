@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/medAIml_backend"
+]
+resolver = "2"

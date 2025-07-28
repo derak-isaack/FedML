@@ -1,0 +1,276 @@
+use crate::client::load_and_predict;
+// mod client;
+use candid::CandidType;
+use ic_cdk::api;
+use csv_core::{Reader, ReadFieldResult, ReadRecordResult};
+use std::collections::HashMap;
+use std::{borrow::Cow, cell::RefCell};
+use std::fs::File;
+use std::io::BufReader;
+use std::ops::{Sub, Div};
+use candid::types::Serializer;
+use anyhow::{Context, Result};
+use candle_core::{DType, Device, Tensor, Module, Result as CandleResult};
+use candle_nn::{optim, Conv2d, linear, Optimizer, loss, VarMap, VarBuilder, Activation};
+use candle_nn::Sequential;
+// use candle_nn::Linear;
+use candle_nn::linear::Linear;
+ use candle_nn::seq;
+use ic_cdk_macros::{self, query, update};
+use serde::{Serialize, Deserialize};
+use serde_json::{self, Value};
+use ic_stable_structures::{
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
+    DefaultMemoryImpl, StableBTreeMap, StableCell, Storable,
+};
+use candle_transformers::models::resnet::resnet50;
+use ic_stable_structures::storable::Blob;
+use std::path::Path;
+use candle_core::safetensors;
+use crate::storage;
+use candle_nn::ops::{sigmoid, softmax};
+use candle_nn::ops::leaky_relu;
+// use image::GenericImageView;
+
+const DEVICE: Device = Device::Cpu;
+
+const FEATURE_DIMENSION: usize = 7;
+const NUM_CLASSES: usize = 4;
+const LABELS: usize = 4;
+
+//Define a new heap memory to ensure no conflict with one assigned in client.rs
+const WASI_MEMORY_ID: MemoryId = MemoryId::new(7);
+
+// Files in the WASI filesystem (in the stable memory) that store the models.
+const MALARIA_MODEL_MAL: &str = "malaria_types_small.safetensors";
+const MODEL_CONFIG_MAL: &str = "malaria_multiclass.json";
+
+type Memory2 = VirtualMemory<DefaultMemoryImpl>;
+thread_local! {
+    pub static MODEL_WEIGHTS_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+    pub static MODEL_CONFIG_V3_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+
+    pub static MALARIA_MODEL_V3_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+    pub static MODEL_CONFIG_V3_V2_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+
+    pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
+        MemoryManager::init(DefaultMemoryImpl::default())
+    );
+
+    
+    pub static FILE_STORAGE: RefCell<Vec<u8>> = RefCell::default();
+}
+
+#[ic_cdk::update]
+fn append_malaria_stage_model_bytes(bytes: Vec<u8>) {
+    storage::append_bytes(MALARIA_MODEL_MAL.to_string(), bytes);
+}
+
+#[ic_cdk::update]
+fn append_malaria_stage_config_bytes(bytes: Vec<u8>) {
+    storage::append_bytes(MODEL_CONFIG_MAL.to_string(), bytes);
+}
+
+
+#[derive(Debug, Clone, CandidType, Deserialize)] 
+pub struct ModelConfigStage {
+    model_type: String,
+    input_shape: Vec<usize>,
+    num_classes: usize,
+    activation: String,
+    pooling: String,
+    hidden_units: Vec<usize>,
+    framework: String,
+    pretrained_base: String,
+    trainable_base: bool,
+    classifier_head: ClassifierHead,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+struct ClassifierHead {
+    dense_1: DenseLayer,
+    output: DenseLayer,
+}
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+struct DenseLayer {
+    units: usize,
+    activation: String,
+}
+
+pub struct MalariaModelV3Types {
+    pub model: Sequential,
+    pub config: ModelConfigStage,
+}
+
+
+
+impl MalariaModelV3Types {
+    pub fn new(config: ModelConfigStage, vb: VarBuilder) -> Result<Self> {
+        // Helper to get activation function closures with uniform signature
+        fn get_activation_fn(name: &str) -> Box<dyn Fn(&Tensor) -> CandleResult<Tensor> + Send + Sync> {
+            match name {
+                "relu" => Box::new(|x: &Tensor| x.relu()),
+                "leaky_relu" => Box::new(move |x: &Tensor| leaky_relu(x, 0.01)),
+                "sigmoid" => Box::new(|x: &Tensor| sigmoid(x)),
+                "softmax" => Box::new(|x: &Tensor| softmax(x, 1)),
+                _ => Box::new(|x: &Tensor| x.relu()),
+            }
+        }
+
+        let mut seq = seq();
+
+        let initial_in_features = config.input_shape[1] * config.input_shape[2] * config.input_shape[3];
+
+        for (i, &units) in config.hidden_units.iter().enumerate() {
+            let in_features = if i == 0 {
+                // config.input_shape[1]
+                initial_in_features
+            } else {
+                config.hidden_units[i - 1]
+            };
+            ic_cdk::println!("Linear layer {}: in_features={}, out_features={}", i, in_features, units);
+
+            // Use candle_nn::linear (function, not method) with ? to handle Result
+            let linear_layer = candle_nn::linear(in_features, units, vb.pp(format!("hidden_{}", i)))?;
+            seq = seq.add(linear_layer);
+
+            let activation_fn = get_activation_fn(&config.activation);
+            seq = seq.add_fn(activation_fn);
+        }
+
+        // Classifier head dense_1 layer
+        let dense_1_in_features = *config.hidden_units.last().unwrap_or(&initial_in_features);
+        ic_cdk::println!("Classifier dense_1: in_features={}, out_features={}", dense_1_in_features, config.classifier_head.dense_1.units);
+        let dense_1 = candle_nn::linear(
+            *config.hidden_units.last().unwrap_or(&64),
+            config.classifier_head.dense_1.units,
+            vb.pp("classifier.dense_1"),
+        )?;
+        seq = seq.add(dense_1);
+
+        let classifier_activation_fn = get_activation_fn(&config.classifier_head.dense_1.activation);
+        seq = seq.add_fn(classifier_activation_fn);
+
+        // Final output layer
+        ic_cdk::println!("Classifier output: in_features={}, out_features={}", config.classifier_head.dense_1.units, config.num_classes);
+        let output_layer = candle_nn::linear(
+            config.classifier_head.dense_1.units,
+            config.num_classes,
+            vb.pp("classifier.output"),
+        )?;
+        seq = seq.add(output_layer);
+
+        Ok(Self { model: seq, config })
+    }
+
+    pub fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        Ok(self.model.forward(xs)?)
+    }
+}
+
+
+// #[ic_cdk::init]
+// fn init() {
+//     let wasi_memory = MEMORY_MANAGER.with(|m| m.borrow().get(WASI_MEMORY_ID));
+//     ic_wasi_polyfill::init_with_memory(&[0u8; 32], &[], wasi_memory);
+// }
+
+fn load_model_stage_from_storage() -> Vec<u8> {
+    crate::storage::bytes("malaria_types_small.safetensors".to_string()) 
+}
+
+fn load_config_stage_from_storage() -> Vec<u8> {
+    crate::storage::bytes("malaria_multiclass.json".to_string()) 
+}
+
+#[ic_cdk::update]
+pub fn load_and_predict_malaria_stage(image_bytes: Vec<u8>) -> Result<(String, f32), String> {
+    let device = Device::Cpu;
+    let mut varmap = VarMap::new();
+    let vb = VarBuilder::from_varmap(&mut varmap, DType::F32, &device);
+    
+    let model_weights_stage = load_model_stage_from_storage();
+    if model_weights_stage.is_empty() {
+        return Err("Model weights not found in stable storage.".to_string());
+    }
+
+    let safetensors = candle_core::safetensors::load_buffer(&model_weights_stage, &device)
+        .map_err(|e| format!("Failed to load weights: {:?}", e))?;
+
+    for (name, _tensor) in safetensors.iter() {
+        ic_cdk::println!("Available tensor key: {}", name);
+    }
+
+    //Load model config
+    let config_bytes = load_config_stage_from_storage();
+    if config_bytes.is_empty() {
+        return Err("Model config not found in stable storage.".to_string());
+    }
+
+    let config: ModelConfigStage = serde_json::from_slice(&config_bytes)
+        .map_err(|e| format!("Failed to deserialize model config: {:?}", e))?;
+
+    //Image preprocessing
+    let img = image::load_from_memory(&image_bytes)
+        .map_err(|e| format!("Image decode error: {}", e))?
+        .resize_exact(224, 224, image::imageops::FilterType::Triangle)
+        .to_rgb8();
+
+    let (width, height) = img.dimensions();
+    let image_data: Vec<f32> = img
+        .pixels()
+        .flat_map(|p| p.0)
+        .map(|v| v as f32 / 255.0)
+        .collect();
+
+    let tensor = Tensor::from_vec(image_data, &[1, 224 * 224 * 3], &device)
+        .map_err(|e| format!("Tensor creation error: {:?}", e))?;
+
+    let model = MalariaModelV3Types::new(config, vb)
+        .map_err(|e| format!("Model creation error: {:?}", e))?;
+
+    let pred = model
+        .forward(&tensor)
+        .map_err(|e| format!("Prediction error: {:?}", e))?;
+
+    let probabilities = softmax(&pred, 1)
+        .map_err(|e| format!("Softmax error: {:?}", e))?;
+
+    let probs_vec = probabilities
+        .to_vec2::<f32>()
+        .map_err(|e| format!("Probability tensor to vec error: {:?}", e))?;
+
+    let (class_idx, class_prob) = probs_vec[0]
+        .iter()
+        .enumerate()
+        .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+        .map(|(i, &p)| (i as u32, p))
+        .ok_or("Failed to determine stage")?;
+
+    let labels = vec!["ring", "trophozoite", "gametocyte", "schizont"];
+    let label = labels
+        .get(class_idx as usize)
+        .unwrap_or(&"Unknown")
+        .to_string();
+
+    Ok((label, class_prob))
+
+}
+
+
+
+#[derive(Serialize, Deserialize)]
+struct SerializedWeights {
+    ln1_weight2: Vec<f32>,
+}
+
+
+
+//Get the model weights to perform the federated learning. 
+pub fn get_model_weights() -> candle_core::Result<Vec<u8>> {
+    MODEL_WEIGHTS_MAL.with(|weights| {
+        Ok(weights.borrow().clone())
+        }
+    )
+}

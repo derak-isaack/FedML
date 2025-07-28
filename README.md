@@ -42,7 +42,7 @@ flowchart TD
 - 🧪 Early-stage malaria is **hard to detect**  
 - 🏥 Misdiagnosis leads to **avoidable fatalities**  
 - 🤝 Personalized data from different clients will help **tailor AI diagnostics**  
-- 📱 Edge devices in local clinics can **learn collaboratively** while preserving privacy  
+- 📱 Edge devices in local clinics can **learn collaboratively** while preserving patient privacy  
 
 > ⚡️ At MedCare, we envision **AI-powered diagnostic tools** in every remote clinic—resilient, privacy-aware, and **locally adapted.**
 
@@ -50,9 +50,9 @@ flowchart TD
 
 ### 🧠 Model Training
 
-> Since no suitable pretrained model existed, we built one from scratch using **EfficientNetV2** and **TensorFlow**.
+> Since no suitable pretrained `malaria` model exists, we built one by finetuning the pretrained object classification models from **TensorFlow** to correctly identify malaria infected cells alongside their life stages. 
 
-> Of importance during the model training is enabling shuffling of the dataset to prevent overfitting cases. 
+> Of importance during the model training is enabling shuffling of the dataset to prevent overfitting(Model learns too well on the training data but performs poorly on the testing data as well as on production) cases. 
 
 ```python
 IMG_SIZE = (224, 224)
@@ -107,9 +107,33 @@ Out of 2802 cell images in the validation set, the `mobilenet` model correctly p
 
 Generally the model achieved a 96% accuracy on the test set.
 
-- 📊 **Dataset**:  
+For the malaria type classification, the model achieved an accuracy same as the malaria detection model. 
+
+```text
+              precision    recall  f1-score   support
+
+  gametocyte       0.94      0.94      0.94        48
+        ring       0.92      0.89      0.91        38
+    schizont       0.86      0.86      0.86         7
+ trophozoite       0.62      0.67      0.64        12
+
+    accuracy                           0.89       105
+   macro avg       0.83      0.84      0.84       105
+weighted avg       0.89      0.89      0.89       105
+```
+![Malaria Life stage Classification report](type_malaria_cm.png) 
+
+The malaria life stage classification model struggles with the `trophozoite class` and this is due to:
+* Giemsa stains or poor slide quality can obscure features.
+* Early trophozoites can look very similar to the ring stage.
+* Low resolution images. 
+
+- 📊 **Datasets**:  
   - Source: [NIH Malaria Dataset](https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip)  
   - Classes: Infected vs. Uninfected blood cell images  
+
+  - Source:[IML Malaria Dataset](https://www.kaggle.com/datasets/qaziammararshad/iml-malaria/data)
+  - Classes: `ring`, `trophozoite`, `gametocyte`, `schizont`. 
 
 - 🔧 **Model Architecture**:  
   - Backbone: `MobileNetV3Small`  

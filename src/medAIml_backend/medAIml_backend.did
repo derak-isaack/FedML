@@ -8,13 +8,17 @@ service : () -> {
   append_bytes : (text, blob) -> ();
   append_malaria_stage_config_bytes : (blob) -> ();
   append_malaria_stage_model_bytes : (blob) -> ();
+  append_malaria_type_config_bytes : (blob) -> ();
+  append_malaria_type_model_bytes : (blob) -> ();
   append_model_config_bytes : (blob) -> ();
   append_openai_model_bytes : (blob) -> ();
   bytes : (text) -> (blob) query;
   clear_bytes : (text) -> ();
   dataset_to_tensors : (Dataset) -> (Result);
+  generate_recommendation : () -> () query;
   load_and_predict : (blob) -> (Result_1);
   load_and_predict_malaria_stage : (blob) -> (Result_2);
+  load_and_predict_malaria_type : (blob) -> (Result_2);
   read_image_data : (blob) -> (Result_3);
   store_bytes : (text, blob) -> ();
   upload_file : (blob) -> (blob);

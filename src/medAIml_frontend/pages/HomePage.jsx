@@ -51,7 +51,7 @@ const HomePage = () => {
 
       {/* How It Works */}
       <section className="how-it-works">
-        <h2 className="section-title">How MalCare Works</h2>
+        <h2 className="section-title">How PlasmoVision Works</h2>
         <p className="section-subtitle">
           Get started in minutes with our simple, powerful workflow designed for modern 
           healthcare professionals.

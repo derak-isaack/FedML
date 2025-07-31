@@ -3,7 +3,7 @@ use crate::client::load_and_predict;
 use candid::CandidType;
 use ic_cdk::api;
 // use csv_core::{Reader, ReadFieldResult, ReadRecordResult};
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::{borrow::Cow, cell::RefCell};
 use std::fs::File;
 use std::io::BufReader;
@@ -39,19 +39,19 @@ const NUM_CLASSES: usize = 4;
 const LABELS: usize = 4;
 
 //Define a new heap memory to ensure no conflict with one assigned in client.rs
-const WASI_MEMORY_ID: MemoryId = MemoryId::new(7);
+const WASI_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Files in the WASI filesystem (in the stable memory) that store the models.
-const MALARIA_MODEL_MAL: &str = "malaria_types_small.safetensors";
-const MODEL_CONFIG_MAL: &str = "malaria_multiclass.json";
+const MALARIA_MODEL_TYPES: &str = "malaria_types2_small.safetensors";
+const MODEL_CONFIG_TYPES: &str = "malaria_multiclass_types.json";
 
 type Memory2 = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
-    pub static MODEL_WEIGHTS_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
-    pub static MODEL_CONFIG_V3_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+    pub static MODEL_WEIGHTS_MAL_TYPES: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+    pub static MODEL_CONFIG_V3_TYPES: RefCell<Vec<u8>> = RefCell::new(Vec::new());
 
-    pub static MALARIA_MODEL_V3_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
-    pub static MODEL_CONFIG_V3_V2_MAL: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+    pub static MALARIA_MODEL_V3_MAL_TYPES: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+    pub static MODEL_CONFIG_V3_V2_MAL_TYPES: RefCell<Vec<u8>> = RefCell::new(Vec::new());
 
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
         MemoryManager::init(DefaultMemoryImpl::default())
@@ -62,18 +62,18 @@ thread_local! {
 }
 
 #[ic_cdk::update]
-fn append_malaria_stage_model_bytes(bytes: Vec<u8>) {
-    storage::append_bytes(MALARIA_MODEL_MAL.to_string(), bytes);
+fn append_malaria_type_model_bytes(bytes: Vec<u8>) {
+    storage::append_bytes(MALARIA_MODEL_TYPES.to_string(), bytes);
 }
 
 #[ic_cdk::update]
-fn append_malaria_stage_config_bytes(bytes: Vec<u8>) {
-    storage::append_bytes(MODEL_CONFIG_MAL.to_string(), bytes);
+fn append_malaria_type_config_bytes(bytes: Vec<u8>) {
+    storage::append_bytes(MODEL_CONFIG_TYPES.to_string(), bytes);
 }
 
 
 #[derive(Debug, Clone, CandidType, Deserialize)] 
-pub struct ModelConfigStage {
+pub struct ModelConfiguration {
     model_type: String,
     input_shape: Vec<usize>,
     num_classes: usize,
@@ -100,13 +100,13 @@ struct DenseLayer {
 
 pub struct MalariaModelV3Types {
     pub model: Sequential,
-    pub config: ModelConfigStage,
+    pub config: ModelConfiguration,
 }
 
 
 
 impl MalariaModelV3Types {
-    pub fn new(config: ModelConfigStage, vb: VarBuilder) -> Result<Self> {
+    pub fn new(config: ModelConfiguration, vb: VarBuilder) -> Result<Self> {
         // Helper to get activation function closures with uniform signature
         fn get_activation_fn(name: &str) -> Box<dyn Fn(&Tensor) -> CandleResult<Tensor> + Send + Sync> {
             match name {
@@ -177,15 +177,15 @@ impl MalariaModelV3Types {
 // }
 
 fn load_model_stage_from_storage() -> Vec<u8> {
-    crate::storage::bytes("malaria_types_small.safetensors".to_string()) 
+    crate::storage::bytes("malaria_types2_small.safetensors".to_string()) 
 }
 
 fn load_config_stage_from_storage() -> Vec<u8> {
-    crate::storage::bytes("malaria_multiclass.json".to_string()) 
+    crate::storage::bytes("malaria_multiclass_types.json".to_string()) 
 }
 
 #[ic_cdk::update]
-pub fn load_and_predict_malaria_stage(image_bytes: Vec<u8>) -> Result<(String, f32), String> {
+pub fn load_and_predict_malaria_type(image_bytes: Vec<u8>) -> Result<(String, f32), String> {
     let device = Device::Cpu;
     let mut varmap = VarMap::new();
     let vb = VarBuilder::from_varmap(&mut varmap, DType::F32, &device);
@@ -208,7 +208,7 @@ pub fn load_and_predict_malaria_stage(image_bytes: Vec<u8>) -> Result<(String, f
         return Err("Model config not found in stable storage.".to_string());
     }
 
-    let config: ModelConfigStage = serde_json::from_slice(&config_bytes)
+    let config: ModelConfiguration = serde_json::from_slice(&config_bytes)
         .map_err(|e| format!("Failed to deserialize model config: {:?}", e))?;
 
     //Image preprocessing
@@ -246,9 +246,9 @@ pub fn load_and_predict_malaria_stage(image_bytes: Vec<u8>) -> Result<(String, f
         .enumerate()
         .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
         .map(|(i, &p)| (i as u32, p))
-        .ok_or("Failed to determine stage")?;
+        .ok_or("Failed to determine malaria type")?;
 
-    let labels = vec!["ring", "trophozoite", "gametocyte", "schizont"];
+    let labels = vec!["Falciparum", "Malariae", "Ovale", "Vivax"];
     let label = labels
         .get(class_idx as usize)
         .unwrap_or(&"Unknown")
@@ -269,7 +269,7 @@ struct SerializedWeights {
 
 //Get the model weights to perform the federated learning. 
 pub fn get_model_weights() -> candle_core::Result<Vec<u8>> {
-    MODEL_WEIGHTS_MAL.with(|weights| {
+    MODEL_WEIGHTS_MAL_TYPES.with(|weights| {
         Ok(weights.borrow().clone())
         }
     )

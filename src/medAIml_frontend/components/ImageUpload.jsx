@@ -4,10 +4,11 @@ import { Actor, HttpAgent } from '@dfinity/agent';
 // Import the idlFactory and canisterId from your generated declarations
 import { idlFactory as backend_idl_factory, canisterId as backend_canister_id } from '../../declarations/medAIml_backend';
 
-const agentHost = process.env.DFX_NETWORK === "local"
-  ? `http://127.0.0.1:4943` // Default local replica address
-  : `https://icp-api.io`;
-
+// const agentHost = process.env.DFX_NETWORK === "local"
+//   ? `http://127.0.0.1:4943` // Default local replica address
+//   : `https://icp-api.io`;
+const agentHost = process.env.DFX_NETWORK === 'local' ? 'http://127.0.0.1:4943' : 'https://icp-api.io';
+const agent = new HttpAgent({ fetch, host: agentHost });
 const canisterID = 'bkyz2-fmaaa-aaaaa-qaaaq-cai';
 
 const ImageUpload = () => {
@@ -18,30 +19,32 @@ const ImageUpload = () => {
   const [predictionResult, setPredictionResult] = useState('');
   // const [predictionResult, setPredictionResult] = useState('');
   const [predictionResultStage, setPredictionResultStage] = useState('');
+  const [typeResult, setTypeResult] = useState('');
+  const [generatedRecommendation, setGenerateRecommendation] = useState('')
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const actorRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const initActor = async () => {
-      try {
-        const agent = new HttpAgent({ host: agentHost });
-        if (process.env.DFX_NETWORK === 'local') {
-          await agent.fetchRootKey();
-        }
-        actorRef.current = Actor.createActor(backend_idl_factory, {
-          agent,
-          canisterId: backend_canister_id, // Use the imported canisterId
-        });
-        console.log('Actor initialized with backend canister.');
-      } catch (error) {
-        console.error('Failed to initialize actor:', error);
-        setPredictionResult('Could not connect to backend.');
+  const initActor = async () => {
+    try {
+      const agent = new HttpAgent({ host: agentHost });
+      if (process.env.DFX_NETWORK === 'local') {
+        await agent.fetchRootKey();
       }
-    };
-    initActor();
-  }, []);
+      actorRef.current = Actor.createActor(backend_idl_factory, {
+        agent,
+        canisterId: backend_canister_id,
+      });
+      console.log('Actor initialized with backend canister.');
+    } catch (error) {
+      console.error('Failed to initialize actor:', error);
+      setPredictionResult('Could not connect to backend.');
+    }
+  };
+  initActor();
+}, []);
 
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
@@ -100,32 +103,80 @@ const ImageUpload = () => {
     setPredictionResult('Predicting...');
 
     try {
-      const prediction = await actorRef.current.load_and_predict(rawImageBytes);
+          const prediction = await actorRef.current.load_and_predict(rawImageBytes);
 
-      if ('Ok' in prediction) {
-        const [classIndex, label, score] = prediction.Ok;
-        const confidence = (score * 100).toFixed(2);
+          if ('Ok' in prediction) {
+            const [classIndex, label, score] = prediction.Ok;
+            const confidence = (score * 100).toFixed(2);
 
-        setPredictionResult(`Class: ${classIndex} — ${label} — Score: ${confidence}%`);
+            setPredictionResult(`Class: ${classIndex} — ${label} — Score: ${confidence}%`);
 
-        let stageLabel = "No malaria stage (uninfected)";
-        let stageConfidence = 0.0;
+            let stageLabel = "No malaria stage (uninfected)";
+            let stageConfidence = 0.0;
 
-        if (score > 0.5) {
-          const stagePrediction = await actorRef.current.load_and_predict_malaria_stage(rawImageBytes);
+            // Declare typeLabel here for scope
+            let typeLabel = "Unknown type";
 
-          if ('Ok' in stagePrediction) {
-            const { 0: stageLabel, 1: rawStageConfidence } = stagePrediction.Ok;
-            const stageConfidence = (rawStageConfidence * 100).toFixed(2);
-            setPredictionResultStage(`Stage: ${stageLabel} — Confidence: ${stageConfidence}%`);
-          } else if ('Err' in stagePrediction) {
-            console.error('Stage prediction failed:', stagePrediction.Err);
-            setPredictionResultStage(`Stage prediction failed: ${stagePrediction.Err}`);
+            if (score > 0.5) {
+              const stagePrediction = await actorRef.current.load_and_predict_malaria_stage(rawImageBytes);
+
+              if ('Ok' in stagePrediction) {
+                const { 0: sLabel, 1: rawStageConfidence } = stagePrediction.Ok;
+                stageLabel = sLabel;
+                stageConfidence = (rawStageConfidence * 100).toFixed(2);
+                setPredictionResultStage(`Stage: ${stageLabel} — Confidence: ${stageConfidence}%`);
+              } else if ('Err' in stagePrediction) {
+                console.error('Stage prediction failed:', stagePrediction.Err);
+                setPredictionResultStage(`Stage prediction failed: ${stagePrediction.Err}`);
+              } else {
+                console.error('Unexpected stage prediction format:', stagePrediction);
+                setPredictionResultStage("Stage prediction failed.");
+              }
+
+              const typePrediction = await actorRef.current.load_and_predict_malaria_type(rawImageBytes);
+
+              if ('Ok' in typePrediction) {
+                const [tLabel, rawTypeConfidence] = typePrediction.Ok;
+                typeLabel = tLabel; // assign to outer scope variable
+                const typeConfidence = (rawTypeConfidence * 100).toFixed(2);
+                setTypeResult(`Type: ${typeLabel} — Confidence: ${typeConfidence}%`);
+              } else if ('Err' in typePrediction) {
+                console.error('Type prediction failed:', typePrediction.Err);
+                setTypeResult(`Type prediction failed: ${typePrediction.Err}`);
+              } else {
+                console.error('Unexpected Type prediction format:', typePrediction);
+                setPredictionResultStage(prev => `${prev}\nType prediction failed.`);
+              }
+            }
+
+            // Now typeLabel is defined and accessible here
+            const recommendationPrompt = `Given a malaria classification of ${label}, stage ${stageLabel}, and type ${typeLabel}, recommend treatment or actions.`;
+
+            try {
+              const recommendation = await actorRef.current.generate_recommendation(recommendationPrompt);
+
+              if ('Ok' in recommendation) {
+                setGenerateRecommendation(recommendation.Ok);
+              } else {
+                console.error('Recommendation generation failed:', recommendation.Err);
+                setGenerateRecommendation(`Recommendation failed: ${recommendation.Err}`);
+              }
+            } catch (err) {
+              console.error('Recommendation exception:', err);
+              setGenerateRecommendation(`Recommendation error: ${err.message || err}`);
+            }
+          } else if ('err' in prediction) {
+            setPredictionResult(`Prediction error: ${String(prediction.err)}`);
+            console.log('Prediction error:', prediction.err);
           } else {
-            console.error('Unexpected stage prediction format:', stagePrediction);
-            setPredictionResultStage("Stage prediction failed.");
-          }}
-
+            setPredictionResult(`Prediction result: ${JSON.stringify(prediction)}`);
+            console.log('Unexpected structure:', prediction);
+          }
+        } catch (err) {
+          console.error('Prediction exception:', err);
+          setPredictionResult(`Prediction failed: ${err.message || err}`);
+        } finally {
+          setIsAnalyzing(false);
 
         const newPrediction = {
           id: Date.now(),
@@ -134,7 +185,7 @@ const ImageUpload = () => {
           stage: stageLabel,
           confidence: parseFloat(confidence),
           timestamp: new Date(),
-          reward: (Math.random() * 0.05 + 0.03).toFixed(3), 
+          reward: (Math.random() * 0.05 + 0.03).toFixed(3),
           status: 'pending_payout',
           imageName: selectedImage.name || 'Captured Image'
         };
@@ -145,21 +196,12 @@ const ImageUpload = () => {
 
         setTimeout(() => {
           navigate('/dashboard');
-        }, 7000);
-
-      } else if ('err' in prediction) {
-        setPredictionResult(`Prediction error: ${String(prediction.err)}`);
-        console.log('Prediction error:', prediction.err);
-      } else {
-        setPredictionResult(`Prediction result: ${JSON.stringify(prediction)}`);
-        console.log('Unexpected structure:', prediction);
+        }, 20000);
       }
-    } catch (err) {
-      console.error('Prediction exception:', err);
-      setPredictionResult(`Prediction failed: ${err.message || err}`);
-    } finally {
-      setIsAnalyzing(false);
-  }}
+    }
+    
+    
+
 
 
   const handleClear = () => {
@@ -248,6 +290,23 @@ const ImageUpload = () => {
         <p className="result-text">{predictionResultStage}</p>
       </div>
     )}
+
+    {/* Malaria Type Result */}
+    {typeResult && (
+      <div className="result-card">
+        <h3 className="result-title">Malaria Type</h3>
+        <p className="result-text">{typeResult}</p>
+      </div>
+    )}
+
+    {generatedRecommendation && (
+      <div className="result-card">
+        <h3 className="result-title">AI Recommendation</h3>
+        <p className="result-text">{generatedRecommendation}</p>
+      </div>
+    )}
+
+
   </div>
 )};
 

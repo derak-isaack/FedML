@@ -1439,6 +1439,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-llm"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa0e74462ec292f110b27f9c50d7b152f9172be2326053cc1290d58bcf438c2c"
+dependencies = [
+ "candid",
+ "ic-cdk 0.17.2",
+ "serde",
+]
+
+[[package]]
 name = "ic-oss-can"
 version = "0.9.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1850,12 +1861,14 @@ dependencies = [
  "ic-cdk 0.16.1",
  "ic-cdk-macros 0.16.0",
  "ic-file-uploader",
+ "ic-llm",
  "ic-oss-can",
  "ic-oss-types 0.6.6",
  "ic-stable-structures",
  "ic-wasi-polyfill",
  "image",
  "imp",
+ "once_cell",
  "postcard",
  "serde",
  "serde-csv-core",

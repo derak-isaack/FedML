@@ -174,7 +174,7 @@ const DashboardContent = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1 className="dashboard-title">MalCare Dashboard</h1>
+        <h1 className="dashboard-title">PlasmoVision Dashboard</h1>
         <div className="wallet-section">
           <div className="earnings-display">
             <span className="earnings-icon">💰</span>

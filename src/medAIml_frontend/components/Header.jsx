@@ -69,7 +69,7 @@ const Header = () => {
       <header className="header">
         <Link to="/" className="logo">
           <div className="logo-icon">M</div>
-          MalCare
+          PlasmoVision
         </Link>
         
         <nav className="nav">
